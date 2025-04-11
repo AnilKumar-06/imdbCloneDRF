@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, HttpResponse
-from .models import WatchList, StreamPlateform
-from .serializers import WatchListSerializer, StreamPlateformSerializer
+from .models import WatchList, StreamPlateform, Review
+from .serializers import WatchListSerializer, StreamPlateformSerializer, ReviewSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -13,6 +13,7 @@ from rest_framework import mixins
 from rest_framework import generics
 from rest_framework.reverse import reverse
 from rest_framework import viewsets
+from rest_framework.serializers import ValidationError
 
 
 @api_view(['GET'])
@@ -28,6 +29,31 @@ class StreamPlateformViewSet(viewsets.ModelViewSet):
     serializer_class = StreamPlateformSerializer
 
 
+class ReviewCreate(generics.CreateAPIView):
+    serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
+
+    
+    def perform_create(self, serializer):
+        pk = self.kwargs['pk']
+        movie = WatchList.objects.get(pk=pk)
+        review_user = self.request.user
+        review_queryset = Review.objects.filter(review_user=review_user, watchlist=movie)
+        if review_queryset:
+            raise ValidationError("Can not review multiple time")
+        serializer.save(watchlist = movie)
+
+class ReviewListView(generics.ListAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        return Review.objects.filter(watchlist=pk)
+
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
 
 # class StreamPlateformList(generics.ListCreateAPIView):
 #     queryset = StreamPlateform.objects.all()

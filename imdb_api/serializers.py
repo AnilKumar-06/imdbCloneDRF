@@ -1,8 +1,10 @@
 from rest_framework import serializers
-from .models import WatchList, StreamPlateform
+from .models import WatchList, StreamPlateform, Review
 
-    
+  
+   
 class WatchListSerializer(serializers.ModelSerializer):
+    #reviews = ReviewSerializer(many=True, read_only=True)
     class Meta:
         model = WatchList
         fields = "__all__"
@@ -10,9 +12,33 @@ class WatchListSerializer(serializers.ModelSerializer):
 class StreamPlateformSerializer(serializers.HyperlinkedModelSerializer):
     #url = serializers.HyperlinkedIdentityField(view_name='streamplateform-detail')
     watch_list = WatchListSerializer(many=True, read_only=True)
+
     class Meta:
         model = StreamPlateform
         fields = "__all__"
+
+
+    def validate_name(self, value):
+        if len(value)<=2:
+            raise serializers.ValidationError("Name is  too short")
+        return value
+    
+    def validate(self, data):
+        if data['name'] == data['about']:
+            raise serializers.ValidationError("Name and about must be different")
+        return data
+    
+class ReviewSerializer(serializers.ModelSerializer):
+
+    review_user = serializers.StringRelatedField(read_only=True)
+    watchlist = serializers.StringRelatedField(read_only=True)
+    class Meta:
+        model = Review
+        fields = "__all__"  
+
+
+    
+
 
 
 
