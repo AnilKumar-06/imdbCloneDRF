@@ -14,14 +14,19 @@ from rest_framework import generics
 from rest_framework.reverse import reverse
 from rest_framework import viewsets
 from rest_framework.serializers import ValidationError
-
+from rest_framework.permissions import (IsAuthenticated, 
+                                        IsAdminUser, 
+                                        IsAuthenticatedOrReadOnly
+)
+from .permissions import ReviewUserOrReadOnly
+from .permissions import AdminOrReadOnly
 
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
         'watchlist': reverse('movie-list', request=request, format=format),
         'streamplatform': reverse('stream-plateform', request=request, format=format)
-    })
+    }) 
 
 
 class StreamPlateformViewSet(viewsets.ModelViewSet):
@@ -30,6 +35,8 @@ class StreamPlateformViewSet(viewsets.ModelViewSet):
 
 
 class ReviewCreate(generics.CreateAPIView):
+    permission_classes = [ReviewUserOrReadOnly]
+    
     serializer_class = ReviewSerializer
     queryset = Review.objects.all()
 
@@ -41,9 +48,17 @@ class ReviewCreate(generics.CreateAPIView):
         review_queryset = Review.objects.filter(review_user=review_user, watchlist=movie)
         if review_queryset:
             raise ValidationError("Can not review multiple time")
+        
+        if movie.avg_rating == 0:
+            movie.avg_rating = serializer.validated_data['rating']
+        
+        else:
+            movie.avg_rating = (movie.avg_rating + serializer.validated_data['rating'])/2
+
         serializer.save(watchlist = movie)
 
 class ReviewListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
@@ -52,6 +67,7 @@ class ReviewListView(generics.ListAPIView):
         return Review.objects.filter(watchlist=pk)
 
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [ReviewUserOrReadOnly]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 

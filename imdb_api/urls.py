@@ -12,11 +12,10 @@ urlpatterns = [
 
     path('list/<int:pk>/review/', views.ReviewListView.as_view(), name='review-list'),
     path("list/<int:pk>/review-create/", views.ReviewCreate.as_view(), name="review-create"),
-    path('list/review/<int:pk>',  views.ReviewDetailView.as_view, name="review-detail"),
+    path('list/review/<int:pk>/',  views.ReviewDetailView.as_view(), name="review-detail"),
     # path('review/', views.ReviewListView.as_view(), name='review-list'),
     # path('review/<int:pk>/', views.ReviewDetailView.as_view(), name='review-detail'),
     
-    path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),
     path('', views.api_root),
 ]
