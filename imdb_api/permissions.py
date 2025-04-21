@@ -3,6 +3,8 @@ from rest_framework import permissions
 class AdminOrReadOnly(permissions.IsAdminUser):
     message = "Admin or read only"
 
+
+    #use for list the objects only
     def has_permission(self, request, view):
         admin_permission =  super().has_permission(request, view)
         if request.method == 'GET' or admin_permission:

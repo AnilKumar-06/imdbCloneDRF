@@ -38,9 +38,10 @@ class ReviewCreate(generics.CreateAPIView):
     permission_classes = [ReviewUserOrReadOnly]
     
     serializer_class = ReviewSerializer
-    queryset = Review.objects.all()
 
-    
+    def get_queryset(self):
+        return Review.objects.all()
+   
     def perform_create(self, serializer):
         pk = self.kwargs['pk']
         movie = WatchList.objects.get(pk=pk)
@@ -49,13 +50,16 @@ class ReviewCreate(generics.CreateAPIView):
         if review_queryset:
             raise ValidationError("Can not review multiple time")
         
-        if movie.avg_rating == 0:
+        if movie.number_rating == 0:
             movie.avg_rating = serializer.validated_data['rating']
         
         else:
             movie.avg_rating = (movie.avg_rating + serializer.validated_data['rating'])/2
+        
+        movie.number_rating += 1
+        movie.save()
 
-        serializer.save(watchlist = movie)
+        serializer.save(watchlist = movie, review_user=review_user)
 
 class ReviewListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
